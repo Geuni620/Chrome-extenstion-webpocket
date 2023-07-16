@@ -1,38 +1,45 @@
-chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
-  if (request.message === "save_and_close_tabs") {
-    saveAndCloseTabs();
-    sendResponse({status: "Tabs saved and closed"});
-  } else if (request.message === "load_tabs") {
-    loadTabs();
-    sendResponse({status: "Tabs loaded"});
-  }
-});
+let tabStatus = "No tabs saved";
 
-function saveAndCloseTabs() {
-  chrome.tabs.query({}, function (tabs) {
-    var tabURLs = tabs
-      .map((tab) => tab.url)
-      .filter((url) => !url.startsWith("chrome://"));
-
-    // URL 저장
-    chrome.storage.local.set({savedURLs: tabURLs}, function () {
-      console.log("URLs 저장 완료");
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  if (request.message === "save_tabs") {
+    // 현재 창의 모든 탭을 가져옴
+    chrome.tabs.query({currentWindow: true}, function (tabs) {
+      let urls = tabs.map(function (tab) {
+        return tab.url;
+      });
+      let obj = {};
+      obj["savedTabs"] = urls;
+      // 'savedTabs'라는 키를 사용해 저장
+      chrome.storage.sync.set(obj, function () {
+        if (chrome.runtime.lastError) {
+          tabStatus = "Failed to save tabs";
+        } else {
+          // 탭들이 저장된 후에 현재 창을 닫음
+          chrome.windows.getCurrent(function (window) {
+            chrome.windows.remove(window.id);
+            tabStatus = "Tabs saved";
+          });
+        }
+      });
     });
-
-    // 탭 닫기
-    tabs.forEach((tab) => {
-      if (!tab.url.startsWith("chrome://")) {
-        chrome.tabs.remove(tab.id);
+    // 비동기 응답을 사용하므로 `true`를 반환해야 합니다.
+    return true;
+  } else if (request.message === "load_tabs") {
+    // 'savedTabs'라는 키를 사용해 불러오기
+    chrome.storage.sync.get("savedTabs", function (data) {
+      let urls = data.savedTabs;
+      if (urls && urls.length > 0) {
+        urls.forEach(function (url) {
+          chrome.tabs.create({url: url});
+        });
+        tabStatus = "Tabs loaded";
+      } else {
+        tabStatus = "No tabs to load";
       }
     });
-  });
-}
-
-function loadTabs() {
-  chrome.storage.local.get("savedURLs", function (data) {
-    var savedURLs = data.savedURLs;
-    if (savedURLs) {
-      savedURLs.forEach((url) => chrome.tabs.create({url: url}));
-    }
-  });
-}
+    // 비동기 응답을 사용하므로 `true`를 반환해야 합니다.
+    return true;
+  } else if (request.message === "get_status") {
+    sendResponse({status: tabStatus});
+  }
+});

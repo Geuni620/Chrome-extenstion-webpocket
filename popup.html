@@ -1,6 +1,33 @@
 <!DOCTYPE html>
 <html lang="ko">
-  <meta charset="utf-8" />
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      body {
+        width: 150px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        font-family: Arial, sans-serif;
+      }
+      button {
+        width: 130px;
+        margin-top: 10px;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 5px;
+        background-color: #4caf50;
+        color: white;
+        font-size: 1em;
+        cursor: pointer;
+      }
+      button:hover {
+        background-color: #45a049;
+      }
+    </style>
+  </head>
   <body>
     <button id="save-btn">모든 탭 저장하기</button>
     <button id="load-btn">저장된 탭 불러오기</button>
