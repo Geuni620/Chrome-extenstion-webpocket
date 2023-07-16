@@ -1,0 +1,25 @@
+{
+  "name": "WebPocket",
+  "description": "현재 열려 있는 모든 웹사이트를 저장하고, 다음 번에 쉽게 열 수 있도록 하는 크롬 확장 프로그램입니다.",
+  "version": "1.0",
+  "manifest_version": 3,
+  "background": {
+    "service_worker": "background.js"
+  },
+  "permissions": ["tabs", "storage"],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "/images/icons8-color-16.png",
+      "32": "/images/icons8-color-32.png",
+      "48": "/images/icons8-color-48.png",
+      "128": "/images/icons8-color-128.png"
+    }
+  },
+  "icons": {
+    "16": "/images/icons8-color-16.png",
+    "32": "/images/icons8-color-32.png",
+    "48": "/images/icons8-color-48.png",
+    "128": "/images/icons8-color-128.png"
+  }
+}
