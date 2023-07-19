@@ -1,38 +1,41 @@
-chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
-  if (request.message === "save_and_close_tabs") {
-    saveAndCloseTabs();
-    sendResponse({status: "Tabs saved and closed"});
-  } else if (request.message === "load_tabs") {
-    loadTabs();
-    sendResponse({status: "Tabs loaded"});
-  }
-});
-
-function saveAndCloseTabs() {
-  chrome.tabs.query({}, function (tabs) {
-    var tabURLs = tabs
-      .map((tab) => tab.url)
-      .filter((url) => !url.startsWith("chrome://"));
-
-    // URL 저장
-    chrome.storage.local.set({savedURLs: tabURLs}, function () {
-      console.log("URLs 저장 완료");
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  if (request.message === "save_tabs") {
+    chrome.tabs.query({currentWindow: true}, function (tabs) {
+      let urls = tabs.map((tab) => tab.url);
+      // `request.title`을 키로 사용하여 탭 URL을 저장합니다.
+      chrome.storage.sync.set({[request.title]: urls}, function () {
+        if (chrome.runtime.lastError) {
+          console.error(chrome.runtime.lastError);
+        } else {
+          chrome.windows.getCurrent(function (window) {
+            chrome.windows.remove(window.id);
+          });
+        }
+      });
     });
-
-    // 탭 닫기
-    tabs.forEach((tab) => {
-      if (!tab.url.startsWith("chrome://")) {
-        chrome.tabs.remove(tab.id);
+    return true;
+  } else if (request.message === "load_tabs") {
+    // `request.title`을 키로 사용하여 탭 URL을 불러옵니다.
+    chrome.storage.sync.get(request.title, function (data) {
+      if (chrome.runtime.lastError) {
+        console.error(chrome.runtime.lastError);
+      } else {
+        let urls = data[request.title];
+        urls.forEach((url) => chrome.tabs.create({url}));
       }
     });
-  });
-}
+    return true;
+  }
 
-function loadTabs() {
-  chrome.storage.local.get("savedURLs", function (data) {
-    var savedURLs = data.savedURLs;
-    if (savedURLs) {
-      savedURLs.forEach((url) => chrome.tabs.create({url: url}));
-    }
-  });
-}
+  //
+  if (request.message === "reset_tabs") {
+    chrome.storage.sync.clear(function () {
+      if (chrome.runtime.lastError) {
+        console.error(chrome.runtime.lastError);
+      } else {
+        sendResponse({message: "reset_successful"});
+      }
+    });
+    return true;
+  }
+});
