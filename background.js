@@ -27,13 +27,23 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     return true;
   }
 
-  //
   if (request.message === "reset_tabs") {
     chrome.storage.sync.clear(function () {
       if (chrome.runtime.lastError) {
         console.error(chrome.runtime.lastError);
       } else {
         sendResponse({message: "reset_successful"});
+      }
+    });
+    return true;
+  }
+
+  if (request.message === "delete_group") {
+    chrome.storage.sync.remove(request.title, function () {
+      if (chrome.runtime.lastError) {
+        console.error(chrome.runtime.lastError);
+      } else {
+        sendResponse({message: "delete_successful"});
       }
     });
     return true;
